@@ -81,6 +81,20 @@ rs_all <- bind_rows(rs_new, rs_old)
 install.packages("stringr")
 library(stringr)
 ?str_remove_all
+?str_to_lower
+?str_trim
+
+rs_all <- rs_all |> mutate(Artist = str_remove_all(Artist, "The")) |> 
+  mutate(Song = str_remove_all(Song, "The")) |> 
+  mutate(Artist = str_replace_all(Artist, "&", "and")) |> 
+  mutate(Song = str_replace_all(Song, "&", "and")) |> 
+  mutate(Artist = str_remove_all(Artist, "[:punct:]")) |> 
+  mutate(Song = str_remove_all(Song, "[:punct:]")) |> 
+  mutate(Artist = str_to_lower(Artist)) |> 
+  mutate(Song = str_to_lower(Song)) |> 
+  mutate(Artist = str_trim(Artist)) |> 
+  mutate(Song = str_trim(Song))
+
 
 ### Question 4 ----------
 
@@ -93,7 +107,7 @@ library(stringr)
 # in the new rs_joined compared to the original. Use nrow to check (there should be 799 rows)
 
 #ANSWER
-
+rs
 
 ### Question 5 ----------
 

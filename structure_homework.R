@@ -38,8 +38,16 @@ load("rs_data.RData")
 # Why did some of the artist-song fail to match up?
 
 #ANSWER
-
-
+?full_join
+rs_joined_orig <- full_join(rs_new,
+          rs_old,
+          by = c("Artist", "Song")
+          )
+nrow(rs_joined_orig)
+# 860 rows
+# The two datasets are merged; however, with simply one ontop of the other.
+# 2 new columns have been created to specify rank for new and old songs
+# some songs that repeat are sorted first
 
 ### Question 2 ---------- 
 
@@ -50,7 +58,15 @@ load("rs_data.RData")
 # Make Rank and Year into integer variables for rs_old before binding them into rs_all
 
 #ANSWER
+rs_new$Source <- "New"
+rs_old$Source <- "Old"
 
+?as.integer
+rs_old$Year <- as.integer(rs_old$Year)
+rs_old$Rank <- as.integer(rs_old$Rank)
+glimpse(rs_old)
+
+rs_all <- bind_rows(rs_new, rs_old)
 
 ### Question 3 ----------
 
@@ -62,7 +78,9 @@ load("rs_data.RData")
 # Use both functions to make all artists/song lowercase and remove any extra spaces
 
 #ANSWER
-
+install.packages("stringr")
+library(stringr)
+?str_remove_all
 
 ### Question 4 ----------
 

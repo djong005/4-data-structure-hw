@@ -212,7 +212,9 @@ top20$Parsed_Release_Date <- parse_date_time(top20$Release, "dmy")
 
 #ANSWER
 
-
+?pivot_wider
+top20 <- top20 |> pivot_wider(names_from = "Style", 
+                              values_from = "Value")
 
 ### Question 10 ---------
 
@@ -225,8 +227,9 @@ top20$Parsed_Release_Date <- parse_date_time(top20$Release, "dmy")
 # Count the number of songs that were released in each season
 
 #ANSWER
-
-
+?left_join
+left_join(rs_joined, top20,
+          by = c("Artist", "Song"))
 
 ### Question 11 ---------
 

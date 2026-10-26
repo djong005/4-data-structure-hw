@@ -228,8 +228,20 @@ top20 <- top20 |> pivot_wider(names_from = "Style",
 
 #ANSWER
 ?left_join
-left_join(rs_joined, top20,
+left_join(top20, rs_joined,
           by = c("Artist", "Song"))
+
+?month
+top20$Release_month <- month(top20$Parsed_Release_Date,
+                             label = T)
+
+top20 <- top20 |> mutate(season = fct_collapse(Release_month,
+                                      Winter = c("Dec", "Jan", "Feb"),
+                                      Spring = c("Mar", "Apr", "May"),
+                                      Summer = c("Jun", "Jul", "Aug"),
+                                      Fall = c("Sep", "Oct", "Nov")))
+fct_count(top20$season)
+
 
 ### Question 11 ---------
 
@@ -240,5 +252,12 @@ left_join(rs_joined, top20,
 
 #ANSWER
 
+?fct_collapse
+contains_m <- str_detect(top20$Key, "m")
+top20$Key[contains_m]
+
+
+top20 <- top20 |> mutate(Quality = str_detect(Key, "m")) |> 
+  mutate(Quality = ifelse(Quality, "Minor", "Major"))
 
 

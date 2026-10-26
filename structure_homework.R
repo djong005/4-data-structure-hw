@@ -107,7 +107,15 @@ rs_all <- rs_all |> mutate(Artist = str_remove_all(Artist, "The")) |>
 # in the new rs_joined compared to the original. Use nrow to check (there should be 799 rows)
 
 #ANSWER
-rs
+?full_join
+
+rs_all_new <- rs_all |> filter(Source == "New")
+rs_all_old <- rs_all |> filter(Source == "Old")
+rs_joined <- full_join(rs_all_new, rs_all_old, 
+                       by = c("Artist", "Song"),
+                       suffix = c("_New", "_Old"))
+
+nrow(rs_joined)
 
 ### Question 5 ----------
 
@@ -120,7 +128,14 @@ rs
 # You should now be able to see how each song moved up/down in rankings between the two lists
 
 #ANSWER
-
+install.packages("dplyr")
+library(dplyr)
+rs_joined <- rs_joined |> 
+  select(-c("Source_New","Source_Old")) |> 
+  drop_na(Rank_New) |> 
+  drop_na(Rank_Old) |> 
+  mutate(Rank_Change = Rank_Old - Rank_New) |> 
+  arrange(Rank_Change)
 
 ### Question 6 ----------
 
@@ -132,6 +147,23 @@ rs
 
 #ANSWER
 
+glimpse(rs_joined)
+
+rs_joined <- rs_joined |>
+  mutate(Decade_New = floor(Year_New/10)*10) |> 
+  mutate(Decade_Old = floor(Year_Old/10)*10) |> 
+  mutate(Decade_Old = str_c(Decade_Old, "s")) |> 
+  mutate(Decade_New = str_c(Decade_New, "s")) # on stringr cheatsheet
+
+# by old decade: 1990s improved the most  
+rs_joined |> 
+  group_by(Decade_Old) |> 
+  summarize(Mean = mean(Rank_Change, na.rm = T))
+
+# by new decade: 1980s improved the most
+rs_joined |> 
+  group_by(Decade_New) |> 
+  summarize(Mean = mean(Rank_Change, na.rm = T))
 
 
 ### Question 7 ----------
@@ -143,7 +175,20 @@ rs
 
 #ANSWER
 
+?fct_count
+fct_count(rs_joined$Decade_Old)
+fct_count(rs_joined$Decade_New)
 
+?fct_lump
+old_lump <- fct_lump(rs_joined$Decade_Old,
+         n = 3,
+         other_level = "Other")
+new_lump <- fct_lump(rs_joined$Decade_New,
+         n = 3,
+         other_level = "Other")
+
+fct_count(old_lump, prop = TRUE)
+fct_count(new_lump, prop = TRUE)
 
 ### Question 8 ---------- 
 
@@ -152,7 +197,12 @@ rs
 # Use parse_date_time to fix it
 
 #ANSWER
-
+library(here)
+getwd()
+here()
+top20 <- read_csv("top_20.csv")
+?parse_date_time
+top20$Parsed_Release_Date <- parse_date_time(top20$Release, "dmy")
 
 ### Question 9 --------
 

@@ -1,33 +1,43 @@
-#PSYC 259 Homework 3 - Data Structure
-#For full credit, provide answers for at least 8/11 questions
+# PSYC 259 Homework 3 - Data Structure
+# For full credit, provide answers for at least 8/11 questions
 
-#List names of students collaborating with: 
+# List names of students collaborating with:
 
 ### SETUP: RUN THIS BEFORE STARTING ----------
 
 install.packages("rvest")
 
-#Load packages
+# Load packages
 library(tidyverse)
 library(lubridate)
 library(rvest)
 
 # Scrape the data for the new rolling stone top 500 list
 url <- "https://stuarte.co/2021/2021-full-list-rolling-stones-top-500-songs-of-all-time-updated/"
-rs_new <- url %>% read_html() %>% html_nodes(xpath='/html/body/div[1]/div/div/div[2]/main/article/div[2]/div/div[2]/table') %>% html_table() %>% pluck(1)
+rs_new <- url %>%
+  read_html() %>%
+  html_nodes(xpath = "/html/body/div[1]/div/div/div[2]/main/article/div[2]/div/div[2]/table") %>%
+  html_table() %>%
+  pluck(1)
 
 # Scrape the data for the old rolling stone top 500 list
 url_old <- "https://www.cs.ubc.ca/~davet/music/list/Best9.html"
-rs_old <- url_old %>% read_html() %>% html_nodes(xpath='/html/body/table[2]') %>% html_table() %>% pluck(1) %>% 
-  select(1, 4, 3, 7) %>% rename(Rank = X1, Artist = X3, Song = X4, Year = X7) %>% filter(Year != "YEAR") 
+rs_old <- url_old %>%
+  read_html() %>%
+  html_nodes(xpath = "/html/body/table[2]") %>%
+  html_table() %>%
+  pluck(1) %>%
+  select(1, 4, 3, 7) %>%
+  rename(Rank = X1, Artist = X3, Song = X4, Year = X7) %>%
+  filter(Year != "YEAR")
 
 # If there's a security error, add:
-#url %>% httr::GET(config = httr::config(ssl_verifypeer = FALSE)) %>% read_html()
+# url %>% httr::GET(config = httr::config(ssl_verifypeer = FALSE)) %>% read_html()
 
-#OR
+# OR
 load("rs_data.RData")
 
-### Question 1 ---------- 
+### Question 1 ----------
 
 # Use "full_join" to merge the old and new datasets, rs_new and rs_old,
 # by Artist AND Song. Save the results to a dataset called rs_joined_orig
@@ -37,19 +47,19 @@ load("rs_data.RData")
 # In the viewer, take a look at the merge...what kinds of problems are there?
 # Why did some of the artist-song fail to match up?
 
-#ANSWER
+# ANSWER
 ?full_join
 rs_joined_orig <- full_join(rs_new,
-          rs_old,
-          by = c("Artist", "Song")
-          )
+  rs_old,
+  by = c("Artist", "Song")
+)
 nrow(rs_joined_orig)
 # 860 rows
 # The two datasets are merged; however, with simply one ontop of the other.
 # 2 new columns have been created to specify rank for new and old songs
 # some songs that repeat are sorted first
 
-### Question 2 ---------- 
+### Question 2 ----------
 
 # To clean up the datasets, it would be more efficient to put them into a single data set
 # Add a new variable to each dataset called "Source" with value "New" for rs_new and
@@ -57,7 +67,7 @@ nrow(rs_joined_orig)
 # You will run into a problem because the old dataset has rank/year as characters instead of integers
 # Make Rank and Year into integer variables for rs_old before binding them into rs_all
 
-#ANSWER
+# ANSWER
 rs_new$Source <- "New"
 rs_old$Source <- "Old"
 
@@ -77,22 +87,23 @@ rs_all <- bind_rows(rs_new, rs_old)
 # Finally, read the documentation for the functions str_to_lower and str_trim
 # Use both functions to make all artists/song lowercase and remove any extra spaces
 
-#ANSWER
+# ANSWER
 install.packages("stringr")
 library(stringr)
 ?str_remove_all
 ?str_to_lower
 ?str_trim
 
-rs_all <- rs_all |> mutate(Artist = str_remove_all(Artist, "The")) |> 
-  mutate(Song = str_remove_all(Song, "The")) |> 
-  mutate(Artist = str_replace_all(Artist, "&", "and")) |> 
-  mutate(Song = str_replace_all(Song, "&", "and")) |> 
-  mutate(Artist = str_remove_all(Artist, "[:punct:]")) |> 
-  mutate(Song = str_remove_all(Song, "[:punct:]")) |> 
-  mutate(Artist = str_to_lower(Artist)) |> 
-  mutate(Song = str_to_lower(Song)) |> 
-  mutate(Artist = str_trim(Artist)) |> 
+rs_all <- rs_all |>
+  mutate(Artist = str_remove_all(Artist, "The")) |>
+  mutate(Song = str_remove_all(Song, "The")) |>
+  mutate(Artist = str_replace_all(Artist, "&", "and")) |>
+  mutate(Song = str_replace_all(Song, "&", "and")) |>
+  mutate(Artist = str_remove_all(Artist, "[:punct:]")) |>
+  mutate(Song = str_remove_all(Song, "[:punct:]")) |>
+  mutate(Artist = str_to_lower(Artist)) |>
+  mutate(Song = str_to_lower(Song)) |>
+  mutate(Artist = str_trim(Artist)) |>
   mutate(Song = str_trim(Song))
 
 
@@ -106,35 +117,36 @@ rs_all <- rs_all |> mutate(Artist = str_remove_all(Artist, "The")) |>
 # Did the string cleaning improve matches? If so, there should be fewer rows of data (fewer duplicates)
 # in the new rs_joined compared to the original. Use nrow to check (there should be 799 rows)
 
-#ANSWER
+# ANSWER
 ?full_join
 
 rs_all_new <- rs_all |> filter(Source == "New")
 rs_all_old <- rs_all |> filter(Source == "Old")
-rs_joined <- full_join(rs_all_new, rs_all_old, 
-                       by = c("Artist", "Song"),
-                       suffix = c("_New", "_Old"))
+rs_joined <- full_join(rs_all_new, rs_all_old,
+  by = c("Artist", "Song"),
+  suffix = c("_New", "_Old")
+)
 
 nrow(rs_joined)
 
 ### Question 5 ----------
 
 # Let's clean up rs_joined with the following steps:
-  # remove the variable "Source"
-  # remove any rows where Rank_New or Rank_Old is NA (so we have only the songs that appeared in both lists)
-  # calculate a new variable called "Rank_Change" that subtracts new rank from old rank
-  # sort by rank change
+# remove the variable "Source"
+# remove any rows where Rank_New or Rank_Old is NA (so we have only the songs that appeared in both lists)
+# calculate a new variable called "Rank_Change" that subtracts new rank from old rank
+# sort by rank change
 # Save those changes to rs_joined
 # You should now be able to see how each song moved up/down in rankings between the two lists
 
-#ANSWER
+# ANSWER
 install.packages("dplyr")
 library(dplyr)
-rs_joined <- rs_joined |> 
-  select(-c("Source_New","Source_Old")) |> 
-  drop_na(Rank_New) |> 
-  drop_na(Rank_Old) |> 
-  mutate(Rank_Change = Rank_Old - Rank_New) |> 
+rs_joined <- rs_joined |>
+  select(-c("Source_New", "Source_Old")) |>
+  drop_na(Rank_New) |>
+  drop_na(Rank_Old) |>
+  mutate(Rank_Change = Rank_Old - Rank_New) |>
   arrange(Rank_Change)
 
 ### Question 6 ----------
@@ -145,24 +157,24 @@ rs_joined <- rs_joined |>
 # Group by decade and summarize the mean rank_change for songs released in each decade (you don't have to save it)
 # Which decade improved the most?
 
-#ANSWER
+# ANSWER
 
 glimpse(rs_joined)
 
 rs_joined <- rs_joined |>
-  mutate(Decade_New = floor(Year_New/10)*10) |> 
-  mutate(Decade_Old = floor(Year_Old/10)*10) |> 
-  mutate(Decade_Old = str_c(Decade_Old, "s")) |> 
+  mutate(Decade_New = floor(Year_New / 10) * 10) |>
+  mutate(Decade_Old = floor(Year_Old / 10) * 10) |>
+  mutate(Decade_Old = str_c(Decade_Old, "s")) |>
   mutate(Decade_New = str_c(Decade_New, "s")) # on stringr cheatsheet
 
-# by old decade: 1990s improved the most  
-rs_joined |> 
-  group_by(Decade_Old) |> 
+# by old decade: 1990s improved the most
+rs_joined |>
+  group_by(Decade_Old) |>
   summarize(Mean = mean(Rank_Change, na.rm = T))
 
 # by new decade: 1980s improved the most
-rs_joined |> 
-  group_by(Decade_New) |> 
+rs_joined |>
+  group_by(Decade_New) |>
   summarize(Mean = mean(Rank_Change, na.rm = T))
 
 
@@ -170,10 +182,10 @@ rs_joined |>
 
 # Use fct_count to see the number of songs within each decade
 # Then use fct_lump to limit decade to 3 levels (plus other), and
-# Do fct_count on the lumped factor with the prop argument to see the 
+# Do fct_count on the lumped factor with the prop argument to see the
 # proportion of songs in each of the top three decades (vs. all the rest)
 
-#ANSWER
+# ANSWER
 
 ?fct_count
 fct_count(rs_joined$Decade_Old)
@@ -181,22 +193,24 @@ fct_count(rs_joined$Decade_New)
 
 ?fct_lump
 old_lump <- fct_lump(rs_joined$Decade_Old,
-         n = 3,
-         other_level = "Other")
+  n = 3,
+  other_level = "Other"
+)
 new_lump <- fct_lump(rs_joined$Decade_New,
-         n = 3,
-         other_level = "Other")
+  n = 3,
+  other_level = "Other"
+)
 
 fct_count(old_lump, prop = TRUE)
 fct_count(new_lump, prop = TRUE)
 
-### Question 8 ---------- 
+### Question 8 ----------
 
 # Read the file "top_20.csv" into a tibble called top20
 # Release_Date isn't read in correctly as a date
 # Use parse_date_time to fix it
 
-#ANSWER
+# ANSWER
 library(here)
 getwd()
 here()
@@ -210,54 +224,58 @@ top20$Parsed_Release_Date <- parse_date_time(top20$Release, "dmy")
 # use pivot_wider to fix the issue so that bpm and key are columns
 # overwrite top20 with the pivoted data (there should now be 20 rows!)
 
-#ANSWER
+# ANSWER
 
 ?pivot_wider
-top20 <- top20 |> pivot_wider(names_from = "Style", 
-                              values_from = "Value")
+top20 <- top20 |> pivot_wider(
+  names_from = "Style",
+  values_from = "Value"
+)
 
 ### Question 10 ---------
 
 # Merge in the data from rs_joined to top20 using left_join by artist and song
 # The results should be top20 (20 rows of data) with columns added from rs_joined
 # Use the "month" function from lubridate to get the release month from the release date
-# and add that as a new variable to top 20. 
+# and add that as a new variable to top 20.
 # It should be a factor - if you get a number back read the help for ?month to see how to get a factor
 # Create a new factor called "season" that collapses each set of 3 months into a season "Winter", "Spring", etc.
 # Count the number of songs that were released in each season
 
-#ANSWER
+# ANSWER
 ?left_join
 left_join(top20, rs_joined,
-          by = c("Artist", "Song"))
+  by = c("Artist", "Song")
+)
 
 ?month
 top20$Release_month <- month(top20$Parsed_Release_Date,
-                             label = T)
+  label = T
+)
 
 top20 <- top20 |> mutate(season = fct_collapse(Release_month,
-                                      Winter = c("Dec", "Jan", "Feb"),
-                                      Spring = c("Mar", "Apr", "May"),
-                                      Summer = c("Jun", "Jul", "Aug"),
-                                      Fall = c("Sep", "Oct", "Nov")))
+  Winter = c("Dec", "Jan", "Feb"),
+  Spring = c("Mar", "Apr", "May"),
+  Summer = c("Jun", "Jul", "Aug"),
+  Fall = c("Sep", "Oct", "Nov")
+))
 fct_count(top20$season)
 
 
 ### Question 11 ---------
 
-# How many songs in the top 20 were major vs. minor? 
+# How many songs in the top 20 were major vs. minor?
 # Create a new factor called "Quality" that is either Major or Minor
 # Minor keys contain the lowercase letter "m". If there's no "m", it's Major
 # Figure out which is the top-ranked song (from Rank_New) that used a minor key
 
-#ANSWER
+# ANSWER
 
 ?fct_collapse
 contains_m <- str_detect(top20$Key, "m")
 top20$Key[contains_m]
 
 
-top20 <- top20 |> mutate(Quality = str_detect(Key, "m")) |> 
+top20 <- top20 |>
+  mutate(Quality = str_detect(Key, "m")) |>
   mutate(Quality = ifelse(Quality, "Minor", "Major"))
-
-

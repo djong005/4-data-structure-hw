@@ -244,22 +244,22 @@ top20 <- top20 |> pivot_wider(
 
 # ANSWER
 ?left_join
-left_join(top20, rs_joined,
+top20_joined <- left_join(top20, rs_joined,
   by = c("Artist", "Song")
 )
 
 ?month
-top20$Release_month <- month(top20$Parsed_Release_Date,
+top20_joined$Release_month <- month(top20_joined$Parsed_Release_Date,
   label = T
 )
 
-top20 <- top20 |> mutate(season = fct_collapse(Release_month,
+top20_joined <- top20_joined |> mutate(season = fct_collapse(Release_month,
   Winter = c("Dec", "Jan", "Feb"),
   Spring = c("Mar", "Apr", "May"),
   Summer = c("Jun", "Jul", "Aug"),
   Fall = c("Sep", "Oct", "Nov")
 ))
-fct_count(top20$season)
+fct_count(top20_joined$season)
 
 
 ### Question 11 ---------
@@ -272,10 +272,12 @@ fct_count(top20$season)
 # ANSWER
 
 ?fct_collapse
-contains_m <- str_detect(top20$Key, "m")
-top20$Key[contains_m]
 
-
-top20 <- top20 |>
+top20_joined <- top20_joined |>
   mutate(Quality = str_detect(Key, "m")) |>
   mutate(Quality = ifelse(Quality, "Minor", "Major"))
+
+top20_joined |> filter(Quality == "Minor") |> 
+  arrange(Rank_New)
+
+#god only knows by beach boys is the highest ranked song at 11 that uses a minor key
